@@ -4,6 +4,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field, field_validator
 
 from src.claude_model import DEFAULT_MODEL, ClaudeModel
+from src.news.api import read_discussion, search_stories
 
 MAX_QUERY_CHARACTERS = 120
 MAX_SEARCH_DAYS = 30
@@ -73,18 +74,29 @@ TOOLS = {
         "description": "Save the Ukrainian digest with source links to .data/digest.md, replacing the previous digest.",
         "input_schema": _schema(DigestInput),
     },
-    "readSkill": {
-        "name": "readSkill",
-        "description": "Load the full instructions of a skill from <skills> by its name. Call it first when a skill matches the task.",
-        "input_schema": _schema(SkillInput),
-    },
 }
 
+
+def run_tool(name, tool_input):
+    if name == "searchStories":
+        parsed = SearchInput.model_validate(tool_input)
+        return search_stories(parsed.query, parsed.days)
+    if name == "readDiscussion":
+        parsed = DiscussionInput.model_validate(tool_input)
+        return read_discussion(parsed.id, parsed.offset)
+    if name == "saveDigest":
+        parsed = DigestInput.model_validate(tool_input)
+        path = Path(".data")
+        path.mkdir(parents=True, exist_ok=True)
+        (path / "digest.md").write_text(parsed.text.strip() + "\n", encoding="utf-8")
+        return {"status": "saved", "path": ".data/digest.md"}
+    raise RuntimeError(f"Невідомий тул: {name}")
 
 
 def build_news(model=None):
     return {
         "model": model or ClaudeModel(os.environ.get("ANTHROPIC_MODEL") or DEFAULT_MODEL),
         "system": SYSTEM,
-        "tools": {key: TOOLS[key] for key in ("searchStories", "readDiscussion", "saveDigest")},
+        "tools": TOOLS,
+        "run_tool": run_tool,
     }

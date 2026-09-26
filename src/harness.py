@@ -52,4 +52,15 @@ def run_agent(agent, task):
         return {"reason": "final", "text": reply.text, "messages": messages}
     for call in reply.tool_calls:
         print(f"Модель просить {call.tool_name}:", call.input)
-    return {"reason": "tool-call", "text": reply.text, "messages": messages}
+        result = execute_tool(agent, call)
+        print(f"Результат {call.tool_name}:", result)
+    return {"reason": "tool-result", "text": "", "messages": messages}
+
+
+def execute_tool(agent, call):
+    try:
+        if call.invalid:
+            raise call.error
+        return agent.run_tool(call.tool_name, call.input)
+    except Exception as error:
+        return {"error": str(error)}
