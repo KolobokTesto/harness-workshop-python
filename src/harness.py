@@ -47,5 +47,9 @@ def run_agent(agent, task):
     reply = agent.model.generate(system=agent.system, messages=messages, tools=list(agent.tools.values()), max_tokens=MAX_OUTPUT_TOKENS)
     if reply.stop_reason == "max_tokens":
         raise RuntimeError("Відповідь обрізано. Тули не виконуємо.")
-    print("Модель відповіла. Це один запит без тулів.")
-    return {"reason": "final", "text": reply.text, "messages": messages}
+    if not reply.tool_calls:
+        print("Зупинка: модель відповіла без виклику тула.")
+        return {"reason": "final", "text": reply.text, "messages": messages}
+    for call in reply.tool_calls:
+        print(f"Модель просить {call.tool_name}:", call.input)
+    return {"reason": "tool-call", "text": reply.text, "messages": messages}
