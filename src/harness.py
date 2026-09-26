@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 MAX_OUTPUT_TOKENS = 512
 MODEL_TIMEOUT_SECONDS = 60
 DEFAULT_MAX_STEPS = 10
-DEFAULT_MAX_RETRIES = 0
+DEFAULT_MAX_RETRIES = 2
 
 
 class ApiCallError(Exception):
