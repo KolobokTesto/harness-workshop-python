@@ -53,7 +53,9 @@ class Agent:
 
 
 def first_message(agent, task):
-    return {"role": "user", "content": task}
+    parts = [agent.context] if agent.context else []
+    parts.append(f"<task>\n{task}\n</task>")
+    return {"role": "user", "content": "\n\n".join(parts)}
 
 
 def run_agent(agent, task):

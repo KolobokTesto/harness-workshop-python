@@ -4,6 +4,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field, field_validator
 
 from src.claude_model import DEFAULT_MODEL, ClaudeModel
+from src.context import load_context
 from src.news.api import read_discussion, search_stories
 
 MAX_QUERY_CHARACTERS = 120
@@ -99,4 +100,5 @@ def build_news(model=None):
         "system": SYSTEM,
         "tools": TOOLS,
         "run_tool": run_tool,
+        "context": load_context(),
     }
