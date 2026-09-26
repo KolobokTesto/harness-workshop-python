@@ -1,0 +1,51 @@
+name: Check
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  pull_request:
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: pytest
+  checkpoints:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - ref: start
+          - ref: step-01-model
+          - ref: step-02-messages
+          - ref: step-03-function
+          - ref: step-04-tools
+          - ref: step-05-call
+          - ref: step-06-execute
+          - ref: step-07-history
+          - ref: step-08-loop
+          - ref: step-09-retry
+          - ref: step-10-context
+          - ref: step-11-skills
+          - ref: step-12-guard
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.ref }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: pytest
