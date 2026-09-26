@@ -50,10 +50,13 @@ def run_agent(agent, task):
     if not reply.tool_calls:
         print("Зупинка: модель відповіла без виклику тула.")
         return {"reason": "final", "text": reply.text, "messages": messages}
+    messages.append({"role": "assistant", "content": reply.content})
     for call in reply.tool_calls:
         print(f"Модель просить {call.tool_name}:", call.input)
         result = execute_tool(agent, call)
         print(f"Результат {call.tool_name}:", result)
+        messages.append({"role": "user", "content": [{"type": "tool_result", "tool_use_id": call.tool_call_id, "tool_name": call.tool_name, "content": __import__("json").dumps(result, ensure_ascii=False)}]})
+    print(f"Додали результати. Повідомлень в історії: {len(messages)}.")
     return {"reason": "tool-result", "text": "", "messages": messages}
 
 
