@@ -19,6 +19,7 @@ def main():
         tools=spec["tools"],
         run_tool=spec["run_tool"],
         context=spec["context"],
+        before_tool=spec["before_tool"],
     )
     try:
         result = run_agent(agent, task)

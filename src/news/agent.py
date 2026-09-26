@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field, field_validator
 from src.claude_model import DEFAULT_MODEL, ClaudeModel
 from src.context import load_context
 from src.news.api import read_discussion, search_stories
+from src.settings import load_settings
 from src.skills import read_skill, skill_catalog
 
 MAX_QUERY_CHARACTERS = 120
@@ -103,6 +104,13 @@ def run_tool(name, tool_input):
     raise RuntimeError(f"Невідомий тул: {name}")
 
 
+def before_tool(name):
+    settings = load_settings()
+    if name == "saveDigest" and not settings["permissions"]["saveDigest"]:
+        return "blocked, ask the user"
+    return None
+
+
 def build_news(model=None):
     return {
         "model": model or ClaudeModel(os.environ.get("ANTHROPIC_MODEL") or DEFAULT_MODEL),
@@ -110,4 +118,5 @@ def build_news(model=None):
         "tools": TOOLS,
         "run_tool": run_tool,
         "context": "\n\n".join([load_context(), skill_catalog()]),
+        "before_tool": before_tool,
     }
