@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field, field_validator
 from src.claude_model import DEFAULT_MODEL, ClaudeModel
 from src.context import load_context
 from src.news.api import read_discussion, search_stories
+from src.skills import read_skill, skill_catalog
 
 MAX_QUERY_CHARACTERS = 120
 MAX_SEARCH_DAYS = 30
@@ -75,6 +76,11 @@ TOOLS = {
         "description": "Save the Ukrainian digest with source links to .data/digest.md, replacing the previous digest.",
         "input_schema": _schema(DigestInput),
     },
+    "readSkill": {
+        "name": "readSkill",
+        "description": "Load the full instructions of a skill from <skills> by its name. Call it first when a skill matches the task.",
+        "input_schema": _schema(SkillInput),
+    },
 }
 
 
@@ -91,6 +97,9 @@ def run_tool(name, tool_input):
         path.mkdir(parents=True, exist_ok=True)
         (path / "digest.md").write_text(parsed.text.strip() + "\n", encoding="utf-8")
         return {"status": "saved", "path": ".data/digest.md"}
+    if name == "readSkill":
+        parsed = SkillInput.model_validate(tool_input)
+        return {"text": read_skill(parsed.name)}
     raise RuntimeError(f"Невідомий тул: {name}")
 
 
@@ -100,5 +109,5 @@ def build_news(model=None):
         "system": SYSTEM,
         "tools": TOOLS,
         "run_tool": run_tool,
-        "context": load_context(),
+        "context": "\n\n".join([load_context(), skill_catalog()]),
     }
